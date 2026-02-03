@@ -1,0 +1,12 @@
+
+fastapi
+uvicorn
+sqlalchemy
+asyncpg
+python-jose[cryptography]
+passlib[bcrypt]
+slowapi
+pandas
+pyarrow
+pydantic
+python-multipart

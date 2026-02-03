@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.python-version
 
 # Distribution
 dist/
@@ -16,6 +17,7 @@ env/
 # IDEs
 .vscode/
 .idea/
+.trae/
 
 # Environment variables
 .env
@@ -26,3 +28,6 @@ env/
 
 # Logs
 *.log
+
+# uv
+uv.lock

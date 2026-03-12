@@ -54,3 +54,13 @@ El proyecto generado tendrá la siguiente estructura:
 - `helpers/`: Utilidades generales.
 - `services/`: Lógica de negocio compleja.
 - `docker-compose.yml`: Orquestación de contenedores.
+
+#TODO Verificar que la estructura de carpetas de la API y su contenido es correcto. 
+#TODO Verificar el ejemplo que se genera por defecto. Probablemente no sea necesario si se incluye ya directamente en los archivos de la API el crud de usuarios de la API. 
+#TODO Poner en el readme los requisitos previos. El primero es crear previamente a la API una base de datos (de preferencia postgres) bien en local o en la nube con Terraform. 
+
+#TODO Funcionamiento esperado: El usuario instala la librería y con el init crea todo el sistema de carpertas para la API, Chatbot y Etl, todo esto opcional. El esquema de la base de datos estará en la API (models.py). Una vez está especificado el modelo de datos habrá un comando para crear endpoints CRUD de las tablas que se pida. 
+
+#TODO generar también el .env sugerido basándonos en el nombre del proyecto. Debería también poner apikeys aleatorias, clave fernet y openssh para el la clave secreta.
+
+#TODO Debería generar también manera opcional la carpeta de Settings para el despliegue la la del .github/workflows también para el despliegue.  

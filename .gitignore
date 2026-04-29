@@ -31,3 +31,5 @@ env/
 
 # uv
 uv.lock
+
+.venv/

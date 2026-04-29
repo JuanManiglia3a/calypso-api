@@ -10,7 +10,6 @@ services:
       - ./src/apicalypso/.env
     environment:
       - APP_ENV=develop
-      - PERROBOT_TOKEN=${PERROBOT_TOKEN}
     ports:
       - 5014:5014
     volumes:

@@ -19,10 +19,7 @@ RUN apk add --no-cache git build-base postgresql-dev libffi-dev \
  && uv pip install --system -r requirements.txt \
  && rm -rf /root/.cache
 
-ARG PERROBOT_TOKEN
-ENV PERROBOT_TOKEN=${PERROBOT_TOKEN}
-
-RUN uv pip install --system "git+https://github_pat_${PERROBOT_TOKEN}@github.com/triplealpha-innovation/perroBot.git@main" \
+RUN uv pip install --system "git+https://<<token perroBot>>@github.com/triplealpha-innovation/perroBot.git@main" \
  && rm -rf /root/.cache
 
 RUN apk add --no-cache bash dos2unix

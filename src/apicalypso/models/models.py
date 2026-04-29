@@ -14,9 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped, mapped_column
 )
-from typing import Optional
 from database.db import Base
-from datetime import datetime
 
 #========== Usuarios
 class Usuario(Base):

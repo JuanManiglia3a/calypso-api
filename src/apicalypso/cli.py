@@ -9,14 +9,24 @@ from apicalypso.scaffold import generate
 
 app = typer.Typer()
 
+def _confirmar(pregunta: str, default: bool = False) -> bool:
+    """Prompt de Sí/No en español."""
+    sufijo = " [S/n]: " if default else " [s/N]: "
+    while True:
+        respuesta = input(pregunta + sufijo).strip().lower()
+        if respuesta == "":
+            return default
+        if respuesta in ("s", "si", "sí"):
+            return True
+        if respuesta in ("n", "no"):
+            return False
+        typer.echo("  Por favor responde 's' o 'n'.")
+
 WELCOME_BANNER = """
-╔══════════════════════════════════════════════════════════╗
-║              Bienvenido a  C A L Y P S O  API            ║
-║                                                          ║
-║  Tu punto de partida para crear APIs robustas con        ║
-║  FastAPI + SQLAlchemy Async + PostgreSQL + Docker.       ║
-║  En minutos tendrás una base lista para producción.      ║
-╚══════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  Bienvenido a la librería de Calypso, hecha a mano desde el sur del mundo   ║
+║                    por trabajadores migrantes orgánicos.                    ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
 
@@ -80,12 +90,12 @@ def init(
     modo_idx = typer.prompt("  Elige (1/2)", default="1")
     modo = modo_opciones[int(modo_idx) - 1] if modo_idx in ("1", "2") else "Local"
 
-    app_env_opciones = ["develop", "staging", "production"]
+    app_env_opciones = ["develop", "production"]
     typer.echo("  🏷️  App environment:")
     for i, e in enumerate(app_env_opciones, 1):
         typer.echo(f"     {i}) {e}")
-    env_idx = typer.prompt("  Elige (1/2/3)", default="1")
-    app_env = app_env_opciones[int(env_idx) - 1] if env_idx in ("1", "2", "3") else "develop"
+    env_idx = typer.prompt("  Elige (1/2)", default="1")
+    app_env = app_env_opciones[int(env_idx) - 1] if env_idx in ("1", "2") else "develop"
 
     # ── Paso 3: BD Local ───────────────────────────────────────────────────────
     typer.secho("\n[ 3 / 7 ]  Base de datos local", fg=typer.colors.BRIGHT_BLUE, bold=True)
@@ -97,10 +107,21 @@ def init(
         "server":   typer.prompt("  Host",        default="localhost"),
         "dbname":   typer.prompt("  Nombre BD",   default=project_slug),
     }
+    include_db_container = _confirmar(
+        "  ¿Crear un contenedor PostgreSQL de prueba en Docker Compose?",
+        default=False,
+    )
+    if include_db_container:
+        typer.echo("  ℹ️  Se añadirá un servicio 'db' en docker-compose.yml.")
+    else:
+        typer.echo("  ℹ️  Se asume que tienes una instancia PostgreSQL ya disponible.")
+
+    # ── Paso 3b: Puerto de la API ──────────────────────────────────────────────
+    api_port = typer.prompt("  Puerto de la API (desarrollo)", default=8000, type=int)
 
     # ── Paso 4: BD Producción ──────────────────────────────────────────────────
     typer.secho("\n[ 4 / 7 ]  Base de datos producción", fg=typer.colors.BRIGHT_BLUE, bold=True)
-    configurar_prod = typer.confirm("  ¿Quieres configurarla ahora?", default=False)
+    configurar_prod = _confirmar("  ¿Quieres configurarla ahora?", default=False)
     db_prod = None
     if configurar_prod:
         db_prod = {
@@ -120,16 +141,16 @@ def init(
     # ── Paso 6: PerroBot ───────────────────────────────────────────────────────
     typer.secho("\n[ 6 / 7 ]  PerroBot", fg=typer.colors.BRIGHT_BLUE, bold=True)
     typer.echo("  PerroBot habilita el envío de mensajes desde la API.")
-    usar_perrobot = typer.confirm("  ¿Usar PerroBot?", default=False)
-    token_perrobot = None
+    usar_perrobot = _confirmar("  ¿Usar PerroBot?", default=False)
     passhash_admin_bot = None
+    token_perrobot = None
     if usar_perrobot:
-        token_perrobot = typer.prompt("  TOKEN_PERROBOT (GitHub PAT)", hide_input=True)
+        token_perrobot = typer.prompt("  Token de acceso a PerroBot (GitHub PAT)", hide_input=True)
         passhash_admin_bot = typer.prompt("  Contraseña admin de PerroBot", hide_input=True)
 
     # ── Paso 7: Secretos API ───────────────────────────────────────────────────
     typer.secho("\n[ 7 / 7 ]  Secretos de la API", fg=typer.colors.BRIGHT_BLUE, bold=True)
-    generar_auto = typer.confirm("  ¿Generar secretos automáticamente?", default=True)
+    generar_auto = _confirmar("  ¿Generar secretos automáticamente?", default=True)
 
     if generar_auto:
         api_secrets = {
@@ -160,16 +181,17 @@ def init(
         name=nombre,
         description=descripcion,
         host="0.0.0.0",
-        port=8000,
+        port=api_port,
         modo=modo,
         app_env=app_env,
         perrobot=usar_perrobot,
+        include_db_container=include_db_container,
         db_local=db_local,
         db_prod=db_prod,
         admin=admin,
         api_secrets=api_secrets,
-        token_perrobot=token_perrobot,
         passhash_admin_bot=passhash_admin_bot,
+        token_perrobot=token_perrobot,
     )
 
     # ── Resumen ────────────────────────────────────────────────────────────────
@@ -181,8 +203,9 @@ def init(
             typer.echo(f"   {k}={v}")
 
     typer.echo("\n🚀 Para iniciar:")
-    typer.secho(f"   cd {destino}", fg=typer.colors.CYAN)
     typer.secho("   docker compose up --build -d", fg=typer.colors.CYAN)
+    typer.echo("")
+    typer.secho("Gracias por utilizar tecnología Calypso. ¡Mucho éxito con tu proyecto! 🌍", fg=typer.colors.MAGENTA, bold=True)
     typer.echo("")
 
 

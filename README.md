@@ -1,10 +1,10 @@
 # Calypso API
 
-Librería y CLI para crear estructuras de proyectos robustos y escalables con FastAPI, SQLAlchemy (Async) y PostgreSQL.
+> Genera una API lista para producción en minutos — sin configurar nada desde cero.
+
+Librería y CLI para scaffolding de proyectos robustos y escalables con **FastAPI**, **SQLAlchemy Async** y **PostgreSQL**. Con un solo comando interactivo obtienes: estructura de carpetas completa, autenticación JWT, Docker Compose configurado, `.env` con secretos generados automáticamente y soporte opcional para PerroBot.
 
 ## Instalación
-
-Puedes instalar `calypso-api` directamente desde PyPI usando `pip` o `uv`:
 
 ```bash
 uv add calypso-api
@@ -18,49 +18,84 @@ Una vez instalado, tendrás acceso al comando `calypso` en tu terminal.
 
 ### Crear un nuevo proyecto
 
-Para generar un nuevo proyecto con toda la estructura lista:
-
 ```bash
-calypso init mi_nuevo_proyecto "Mi Nuevo Proyecto" --host 0.0.0.0 --port 8000 --docker
+calypso init
 ```
 
-Esto creará una carpeta `mi_nuevo_proyecto` con:
-- Estructura modular (Controllers, Models, Routes, etc.)
-- Configuración de Docker y Docker Compose.
-- Autenticación JWT configurada.
-- Documentación automática lista.
+El asistente te guiará paso a paso (7 pasos):
+
+1. **Proyecto** — nombre, directorio destino y descripción
+2. **Entorno** — modo (`Local` / `Producción`) y `APP_ENV`
+3. **Base de datos local** — credenciales PostgreSQL local (con defaults)
+4. **Base de datos producción** — opcional, configurable ahora o después
+5. **Usuario admin** — credenciales del usuario administrador de la API
+6. **PerroBot** — habilitar envío de mensajes (requiere GitHub PAT privado)
+7. **Secretos API** — generados automáticamente o introducidos manualmente
+
+Al finalizar se crea el proyecto con:
+- Estructura modular lista (Controllers, Models, Routes, Repositories, etc.)
+- `Dockerfile` y `docker-compose.yml` sincronizados con tus credenciales
+- `.env` completo con todos los secretos (las API keys se muestran una sola vez)
+- Autenticación JWT + usuario admin creado automáticamente en arranque
+
+### Iniciar el proyecto generado
+
+```bash
+cd mi_proyecto
+docker compose up --build -d
+```
 
 ### Comandos disponibles
 
 ```bash
-# Inicializar un proyecto
-calypso init <directorio> <nombre_proyecto>
-
-# Ver ayuda
-calypso --help
+calypso init            # Crear un nuevo proyecto (interactivo)
+calypso run             # Arrancar la API localmente
+calypso --help          # Ayuda
 ```
 
 ## Estructura Generada
 
-El proyecto generado tendrá la siguiente estructura:
+```
+mi_proyecto/
+├── auth/               # Autenticación JWT (login, tokens, dependencias)
+├── controllers/        # Lógica de negocio
+├── core/               # Configuración global (config.py, excepciones)
+├── database/           # Conexión async a PostgreSQL
+├── dependencies/       # Rate limiter y otras dependencias inyectables
+├── helpers/            # Funciones auxiliares reutilizables
+├── models/             # Modelos ORM SQLAlchemy
+├── repositories/       # Acceso a datos (CRUD)
+├── routes/             # Endpoints FastAPI
+├── schemas/            # Schemas Pydantic (validación/serialización)
+├── services/           # Lógica de negocio compleja
+├── static/             # Archivos estáticos
+├── utils/              # Logger, usuario por defecto
+├── main.py             # Punto de entrada
+├── Dockerfile          # python:3.12-alpine + uv (con PerroBot opcional)
+├── docker-compose.yml  # API + PostgreSQL con healthcheck
+├── requirements.txt    # Dependencias sincronizadas con la API de referencia
+└── .env                # Secretos generados (API keys, Fernet, JWT, BD)
+```
 
-- `auth/`: Lógica de autenticación.
-- `controllers/`: Controladores de la lógica de negocio.
-- `core/`: Configuración global.
-- `database/`: Configuración de base de datos.
-- `routes/`: Definición de endpoints.
-- `models/`: Modelos de base de datos.
-- `schemas/`: Schemas Pydantic.
-- `helpers/`: Utilidades generales.
-- `services/`: Lógica de negocio compleja.
-- `docker-compose.yml`: Orquestación de contenedores.
+## Secretos gestionados
 
-#TODO Verificar que la estructura de carpetas de la API y su contenido es correcto. 
-#TODO Verificar el ejemplo que se genera por defecto. Probablemente no sea necesario si se incluye ya directamente en los archivos de la API el crud de usuarios de la API. 
-#TODO Poner en el readme los requisitos previos. El primero es crear previamente a la API una base de datos (de preferencia postgres) bien en local o en la nube con Terraform. 
+La CLI genera o solicita estos valores y los escribe en `.env`:
 
-#TODO Funcionamiento esperado: El usuario instala la librería y con el init crea todo el sistema de carpertas para la API, Chatbot y Etl, todo esto opcional. El esquema de la base de datos estará en la API (models.py). Una vez está especificado el modelo de datos habrá un comando para crear endpoints CRUD de las tablas que se pida. 
+| Variable | Descripción |
+|---|---|
+| `API_KEY`, `X_API_KEY`, `DOCS_API_KEY` | Claves de acceso a la API |
+| `SECRET_KEY` | Clave JWT (hex 32 bytes) |
+| `FERNET_KEY` | Clave de cifrado Fernet |
+| `ALGORITHM` | Algoritmo JWT (`HS256`) |
+| `APP_ENV` | Entorno (`develop` / `staging` / `production`) |
+| `usernameDBLocal/passwordDBLocal/...` | Credenciales BD local |
+| `usernameDB/passwordDB/...` | Credenciales BD producción (opcional) |
+| `usernameAdmin` / `passhashAdminAPI` | Usuario admin de la API |
+| `TOKEN_PERROBOT` / `passhashAdmin` | Solo si PerroBot está habilitado |
 
-#TODO generar también el .env sugerido basándonos en el nombre del proyecto. Debería también poner apikeys aleatorias, clave fernet y openssh para el la clave secreta.
+## Requisitos Previos
 
-#TODO Debería generar también manera opcional la carpeta de Settings para el despliegue la la del .github/workflows también para el despliegue.  
+- Python 3.12+
+- Docker y Docker Compose
+- Una base de datos PostgreSQL (local o en la nube — puedes usar el `docker-compose.yml` generado para local)
+  

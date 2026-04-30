@@ -2,7 +2,7 @@
 services:
   apicalypso:
     container_name: apicalypso
-    image: acrdevseavalue.azurecr.io/apicalypso:latest
+    image: acrdevapicalypso.azurecr.io/apicalypso:latest
     build:
       context: ./src/apicalypso
       dockerfile: dockerfile

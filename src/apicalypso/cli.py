@@ -5,7 +5,7 @@ import secrets
 from typing import Optional
 from pathlib import Path
 from cryptography.fernet import Fernet
-from apicalypso.scaffold import generate
+from apicalypso.scaffold import generate, generate_cicd
 
 app = typer.Typer()
 
@@ -193,6 +193,43 @@ def init(
         passhash_admin_bot=passhash_admin_bot,
         token_perrobot=token_perrobot,
     )
+
+    # ── Paso 8: CI/CD ──────────────────────────────────────────────────────────
+    typer.secho("\n[ 8 / 8 ]  CI/CD GitHub Actions (DEV)", fg=typer.colors.BRIGHT_BLUE, bold=True)
+    typer.echo("  Genera el workflow de GitHub Actions y los archivos de secretos/variables para el entorno DEV.")
+    generar_cicd = _confirmar("  ¿Generar archivos de CI/CD para GitHub Actions?", default=False)
+
+    if generar_cicd:
+        project_slug = nombre.lower().replace(" ", "_")
+        acr_slug = project_slug.replace("_", "")
+        acr_server_inferido = f"acr-dev-{acr_slug}.azurecr.io"
+        app_name_inferido = f"app-dev-api{acr_slug}"
+
+        typer.secho("\n  Valores inferidos (puedes confirmarlos):", fg=typer.colors.YELLOW)
+        typer.echo(f"    ACR Server  : {acr_server_inferido}")
+        typer.echo(f"    App Name    : {app_name_inferido}")
+        typer.secho("\n  ⚠️  Nota: ACR_PASSWORD y el publish profile se generan como", fg=typer.colors.YELLOW)
+        typer.secho("     placeholder (<>). Deberás rellenarlos en settings/ y ejecutar", fg=typer.colors.YELLOW)
+        typer.secho("     settings/setSecretsAndVariables.ps1 tras desplegar el recurso.", fg=typer.colors.YELLOW)
+
+        typer.secho("\n  Generando archivos CI/CD...", fg=typer.colors.YELLOW)
+        generate_cicd(
+            project_root=destino.parent,
+            slug=project_slug,
+            folder_name=destino.name,
+            name=nombre,
+            api_secrets=api_secrets,
+            db_prod=db_prod,
+            admin=admin,
+            perrobot_token=token_perrobot,
+            app_env=app_env,
+            passhash_admin_bot=passhash_admin_bot,
+        )
+        typer.secho("  ✅ Archivos CI/CD generados en settings/ y .github/workflows/", fg=typer.colors.GREEN)
+        typer.secho("     Recuerda añadir al .gitignore del repositorio:", fg=typer.colors.CYAN)
+        typer.echo("       repo-publishprofile-dev-001.yml")
+        typer.echo("       repo-secrets-dev.env")
+        typer.echo("       repo-variables-dev.env")
 
     # ── Resumen ────────────────────────────────────────────────────────────────
     typer.secho(f"\n✨ Proyecto '{nombre}' creado exitosamente en {destino}", fg=typer.colors.GREEN, bold=True)

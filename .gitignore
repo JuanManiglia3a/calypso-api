@@ -31,3 +31,9 @@ env/
 
 # uv
 uv.lock
+
+.venv/
+
+repo-publishprofile-dev-001.yml
+repo-secrets-dev.env
+repo-variables-dev.env

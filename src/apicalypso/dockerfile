@@ -1,0 +1,36 @@
+FROM python:3.12-alpine
+
+LABEL manteiner="jkniffki@triplealpha.in"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    VIRTUAL_ENV=/usr/local \
+    TZ="Europe/Madrid"
+
+WORKDIR /app/
+
+COPY . .
+
+RUN pip install uv==0.11.8
+RUN apk add --no-cache git build-base postgresql-dev libffi-dev \
+ && uv pip install --system -r requirements.txt \
+ && rm -rf /root/.cache
+
+RUN uv pip install --system "git+https://<<token perroBot>>@github.com/triplealpha-innovation/perroBot.git@main" \
+ && rm -rf /root/.cache
+
+RUN apk add --no-cache bash dos2unix
+RUN dos2unix /app/init_container.sh && chmod +x /app/init_container.sh
+
+RUN apk add --no-cache dialog openssh
+RUN echo "root:Docker!" | chpasswd \
+    && ssh-keygen -A
+
+COPY sshd_config /etc/ssh/
+
+EXPOSE 80 2222
+
+ENTRYPOINT ["bash", "init_container.sh" ]

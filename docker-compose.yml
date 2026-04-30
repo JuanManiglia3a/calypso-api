@@ -1,27 +1,16 @@
 
 services:
-  api:
-    build: .
+  apicalypso:
+    container_name: apicalypso
+    image: acrdevapicalypso.azurecr.io/apicalypso:latest
+    build:
+      context: ./src/apicalypso
+      dockerfile: dockerfile
+    env_file:
+      - ./src/apicalypso/.env
+    environment:
+      - APP_ENV=develop
     ports:
-      - "8000:8000"
-    environment:
-      - POSTGRES_SERVER=db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=app
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=app
+      - 5014:5014
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-volumes:
-  postgres_data:
+      - ./src/apicalypso:/app

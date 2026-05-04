@@ -144,6 +144,7 @@ def generate(
 
     # Build docker-compose programmatically
     build_section = f"build: ./{target_dir.name}"
+    network_name = f"red{project_slug}"
 
     depends_on_section = (
         "\n    depends_on:\n"
@@ -152,26 +153,36 @@ def generate(
         if include_db_container else ""
     )
 
-    db_service_section = (
-        "\n  db:\n"
-        "    image: postgres:15-alpine\n"
-        "    environment:\n"
-        "      POSTGRES_USER: ${usernameDBLocal}\n"
-        "      POSTGRES_PASSWORD: ${passwordDBLocal}\n"
-        "      POSTGRES_DB: ${databasenameDBLocal}\n"
-        "    volumes:\n"
-        "      - postgres_data:/var/lib/postgresql/data\n"
-        "    ports:\n"
-        "      - \"5432:5432\"\n"
-        "    healthcheck:\n"
-        "      test: [\"CMD-SHELL\", \"pg_isready -U ${usernameDBLocal}\"]\n"
-        "      interval: 5s\n"
-        "      timeout: 5s\n"
-        "      retries: 5"
+    networks_per_service = (
+        f"\n    networks:\n"
+        f"      - {network_name}"
         if include_db_container else ""
     )
 
-    volumes_section = "\nvolumes:\n  postgres_data:\n" if include_db_container else ""
+    db_service_section = (
+        f"\n  db:\n"
+        f"    container_name: {project_slug}_db\n"
+        f"    image: postgres:15-alpine\n"
+        f"    env_file:\n"
+        f"      - ./{target_dir.name}/.env\n"
+        f"    ports:\n"
+        f"      - \"5432:5432\"\n"
+        f"    healthcheck:\n"
+        f"      test: [\"CMD-SHELL\", \"pg_isready -U $$POSTGRES_USER -d postgres\"]\n"
+        f"      interval: 5s\n"
+        f"      timeout: 5s\n"
+        f"      retries: 5\n"
+        f"    networks:\n"
+        f"      - {network_name}"
+        if include_db_container else ""
+    )
+
+    networks_section = (
+        f"\nnetworks:\n"
+        f"  {network_name}:\n"
+        f"    name: {network_name}\n"
+        if include_db_container else ""
+    )
 
     environment_section = (
         f"\n    environment:\n"
@@ -192,8 +203,9 @@ def generate(
         f"    volumes:\n"
         f"      - ./{target_dir.name}:/app"
         f"{depends_on_section}"
+        f"{networks_per_service}"
         f"{db_service_section}"
-        f"{volumes_section}"
+        f"{networks_section}"
     )
     _write(target_dir.parent / "docker-compose.yml", docker_compose)
 
@@ -244,6 +256,7 @@ def generate(
 
     # --- .env ---
     db_prod_data = db_prod or {"username": "", "password": "", "server": "", "dbname": ""}
+    effective_db_server = "db" if include_db_container else db_local["server"]
     env_content = ENV_TEMPLATE.format(
         api_key=api_secrets["API_KEY"],
         x_api_key=api_secrets["X_API_KEY"],
@@ -254,7 +267,7 @@ def generate(
         app_env=app_env,
         db_local_username=db_local["username"],
         db_local_password=db_local["password"],
-        db_local_server=db_local["server"],
+        db_local_server=effective_db_server,
         db_local_dbname=db_local["dbname"],
         db_prod_username=db_prod_data["username"],
         db_prod_password=db_prod_data["password"],
